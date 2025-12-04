@@ -1,0 +1,101 @@
+name: Sync Governance Registries
+
+on:
+  workflow_dispatch:
+    inputs:
+      skip_preflight:
+        description: 'Skip preflight checks (not recommended)'
+        required: false
+        type: boolean
+        default: false
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync-governance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install notion-client pyyaml
+
+      - name: Preflight checks
+        if: ${{ !inputs.skip_preflight }}
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+        run: |
+          python scripts/preflight.py --bundle governance
+
+      - name: Dry-run export
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          CHITTY_ID: ${{ vars.CHITTY_ID || 'governance-sync-workflow' }}
+        run: |
+          echo "Running dry-run to validate export..."
+          python scripts/export_bundles.py governance --dry-run
+
+      - name: Export governance bundle
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          CHITTY_ID: ${{ vars.CHITTY_ID || 'governance-sync-workflow' }}
+        run: |
+          python scripts/export_bundles.py governance
+
+      - name: Verify bundle
+        run: |
+          python scripts/verify_bundle.py governance
+
+      - name: Check for changes
+        id: git_status
+        run: |
+          git diff --exit-code packages/governance/data/ || echo "has_changes=true" >> $GITHUB_OUTPUT
+
+      - name: Commit and push
+        if: steps.git_status.outputs.has_changes == 'true'
+        run: |
+          git config user.name "chittyos-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add packages/governance/
+          git commit -m "sync(governance): automated export $(date +%Y-%m-%d)
+
+          Bundle: governance
+          Exported by: ${{ github.actor }}
+          ChittyID: ${{ vars.CHITTY_ID || 'governance-sync-workflow' }}
+          Workflow: ${{ github.workflow }}
+
+          🤖 Generated with Claude Code"
+          git push
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Governance Bundle Sync" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Bundle:** governance" >> $GITHUB_STEP_SUMMARY
+          echo "**ChittyID:** ${{ vars.CHITTY_ID || 'governance-sync-workflow' }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Changes:** ${{ steps.git_status.outputs.has_changes || 'none' }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f packages/governance/manifest.json ]; then
+            echo "### Manifest" >> $GITHUB_STEP_SUMMARY
+            echo '```json' >> $GITHUB_STEP_SUMMARY
+            cat packages/governance/manifest.json >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
