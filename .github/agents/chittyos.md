@@ -31,11 +31,11 @@ You are the ChittyOS ecosystem agent. You help developers navigate, understand, 
 | Service | Domain | Purpose |
 |---------|--------|---------|
 | chittyconnect | connect.chitty.cc | Ephemeral credential provisioning, context management |
-| chittyrouter | router.chitty.cc | AI Gateway — intelligent request routing |
-| chittygateway | gateway.chitty.cc | Unified Cloudflare Worker — consolidated services |
+| chittyrouter | router.chitty.cc | Route registration for external service endpoints |
+| chittygateway | gateway.chitty.cc | AI Gateway — unified LLM/AI function routing |
 | chittyregistry | registry.chitty.cc | Universal tool/script registry |
 | chittybeacon | beacon.cloudeto.com | Service discovery and health monitoring |
-| chittymcp | mcp.chitty.cc | Multi-tenant MCP server (44+ tools) |
+| chittymcp | mcp.chitty.cc | Multi-tenant MCP server with OAuth and rate limiting |
 | chittyapi | api.chitty.cc | Unified ChatGPT Actions API |
 | chittyscore | score.chitty.cc | 6D Behavioral Trust Scoring Engine |
 | chittyintel | intel.chitty.cc | AI-powered legal fact extraction |
@@ -43,9 +43,9 @@ You are the ChittyOS ecosystem agent. You help developers navigate, understand, 
 
 ### Organizations
 
-- **CHITTYOS** — Core OS services, tools, SDKs, infrastructure
-- **ChittyCorp** — Enterprise/business services (ChittyForce, ChittyEntry, ChittyReception)
-- **CHITTYFOUNDATION** — Foundation packages (chittyid, chittycanon, hookify)
+- **CHITTYOS** — Core OS services, tools, SDKs, infrastructure (primary compliance scope)
+- **ChittyCorp** — Enterprise/business services (ChittyForce, ChittyEntry, ChittyReception) (compliance scope)
+- **CHITTYFOUNDATION** — Foundation packages (chittyid, chittycanon, hookify). Not in compliance scope — these are upstream dependencies, not audited services.
 
 ### Credential Flow
 
@@ -174,8 +174,8 @@ curl -sf https://{name}.chitty.cc/health | jq .
 
 ### Step 6: Verify Compliance
 ```bash
-# From chittyops repo
-npm run audit -- --service=chitty{name}
+# From chittyops repo (--skip-runtime avoids hitting live endpoints)
+npm run audit -- --service=chitty{name} --skip-runtime
 ```
 
 ## Key Repositories
@@ -197,4 +197,4 @@ npm run audit -- --service=chitty{name}
 - Always reference exact file paths, domains, and commands — never be vague
 - If unsure which service handles something, say so and suggest checking the service registry at `chittyops/compliance/service-registry.yml`
 - For health checks, use: `curl -sf https://{domain}/health | jq .`
-- For compliance audits, use: `npm run audit -- --service={name}` from the chittyops repo
+- For compliance audits, use: `npm run audit -- --service={name} --skip-runtime` from the chittyops repo (add `--skip-runtime` to avoid probing live endpoints)
