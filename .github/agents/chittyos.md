@@ -19,12 +19,12 @@ You are the ChittyOS ecosystem agent. You help developers navigate, understand, 
 
 | Tier | Purpose | Services |
 |------|---------|----------|
-| 0 | Trust Anchors | ChittyID, ChittyTrust, ChittySchema, ChittyCore |
-| 1 | Core Identity | ChittyAuth, ChittyCert, ChittyVerify, ChittyRegister/Registry |
+| 0 | Trust Anchors | ChittyID, ChittyTrust, ChittySchema |
+| 1 | Core Identity | ChittyAuth, ChittyCert, ChittyVerify, ChittyRegister |
 | 2 | Platform | ChittyConnect, ChittyRouter, ChittyAPI, ChittyGateway |
 | 3 | Operational | ChittyMonitor, ChittyDiscovery, ChittyBeacon, ChittyOps, ChittyMCP, ChittyContext, ChittyStandard |
-| 4 | Domain | ChittyScore, ChittyIntel, ChittyChronicle, ChittyLedger, ChittyEvidence-DB, ChittyForce, ChittyEntry, ChittyReception |
-| 5 | Application | ChittyAgent, ChittyCan, ChittyCommand, ChittyConcierge, ChittyHelper, ChittyAssets, ChittySwarm, ChittySync, ChittyStorage, GetChitty, ChittyConnect-Finance, SessionSync, ChittyMac, and more |
+| 4 | Domain | ChittyScore, ChittyIntel, ChittyChronicle, ChittyLedger, ChittyEvidence, ChittyForce, ChittyEntry, ChittyReception |
+| 5 | Application | ChittyAgent, ChittyCan, ChittyCommand, ChittyConcierge, ChittyHelper, ChittyAssets, ChittySwarm, ChittySync, ChittyStorage, GetChitty, ChittyConnectFinance, ChittyMac, ChittyCases, ChittyPortal, ChittyDashboard (see `chittyops/compliance/service-registry.yml` for complete list) |
 
 ### Key Service Domains
 
@@ -184,7 +184,7 @@ npm run audit -- --service=chitty{name} --skip-runtime
 |------|---------|-----------|
 | `CHITTYOS/chittyops` | CI/CD, compliance engine, deployment automation | `compliance/audit.js`, `compliance/service-registry.yml` |
 | `CHITTYOS/chittyconnect` | Context management, credential provisioning | `.chittyconnect.yml` schema |
-| `CHITTYOS/chittycore` | Shared foundation package | `src/` modules |
+| `CHITTYFOUNDATION/chittycore` | Shared foundation package (Tier 0 upstream) | `src/` modules |
 | `CHITTYOS/chittyagent` | Cloud AI agent framework | `workers/` directory |
 | `CHITTYOS/chittystandard` | Standard framework installer | Compliance templates |
 | `CHITTYOS/.github` | Org-wide workflows and this agent | `.github/agents/`, `.github/workflows/` |
