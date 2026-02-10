@@ -1,0 +1,15 @@
+# ChittyOS .github CODEOWNERS
+# Changes to this repo affect all CHITTYOS repositories
+
+# Default: Platform Team
+* @CHITTYOS/platform-team
+
+# Copilot agents require additional review
+.github/agents/ @CHITTYOS/platform-team
+
+# Workflows require careful review (org-wide impact)
+.github/workflows/ @CHITTYOS/platform-team
+
+# Governance documents
+CHARTER.md @CHITTYOS/platform-team
+CLAUDE.md @CHITTYOS/platform-team
