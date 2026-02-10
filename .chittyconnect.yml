@@ -1,0 +1,24 @@
+---
+# ChittyConnect integration for CHITTYOS/.github
+service: chittyos-github
+tier: infrastructure
+organization: CHITTYOS
+domain: null
+
+onboarding:
+  provisions:
+    - chitty_id
+    - service_token
+  auth_provider: chittyauth
+
+sync:
+  enabled: true
+  interval: 6h
+
+metadata:
+  description: Organization-wide GitHub configuration
+  compliance_profile: documentation
+  tags:
+    - org-config
+    - workflows
+    - agents
