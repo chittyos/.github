@@ -1,0 +1,169 @@
+name: Compliance Check
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+jobs:
+  compliance:
+    name: compliance
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed services
+        id: detect
+        run: |
+          # Find which worker directories have changes
+          CHANGED_WORKERS=$(git diff --name-only ${{ github.event.pull_request.base.sha || 'HEAD~1' }}..HEAD 2>/dev/null | \
+            grep -oP '^workers/[^/]+' | sort -u || true)
+
+          if [ -z "$CHANGED_WORKERS" ]; then
+            echo "No worker changes detected"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Changed workers: $CHANGED_WORKERS"
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+            echo "workers<<EOF" >> "$GITHUB_OUTPUT"
+            echo "$CHANGED_WORKERS" >> "$GITHUB_OUTPUT"
+            echo "EOF" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run compliance checks
+        if: steps.detect.outputs.skip != 'true'
+        run: |
+          EXIT_CODE=0
+          WORKERS="${{ steps.detect.outputs.workers }}"
+
+          echo "=== ChittyOS Compliance Check ==="
+          echo ""
+
+          while IFS= read -r worker_dir; do
+            [ -z "$worker_dir" ] && continue
+            WORKER_NAME=$(basename "$worker_dir")
+            echo "--- Checking: $WORKER_NAME ---"
+
+            PASS=0
+            FAIL=0
+            WARN=0
+
+            # 1. CHARTER.md
+            if [ -f "$worker_dir/CHARTER.md" ]; then
+              echo "  ✅ CHARTER.md present"
+              ((PASS++))
+              # Check frontmatter
+              if head -1 "$worker_dir/CHARTER.md" | grep -q '^---'; then
+                echo "  ✅ CHARTER.md has frontmatter"
+                ((PASS++))
+              else
+                echo "  ⚠️  CHARTER.md missing YAML frontmatter"
+                ((WARN++))
+              fi
+            else
+              echo "  ⚠️  CHARTER.md missing (recommended)"
+              ((WARN++))
+            fi
+
+            # 2. CHITTY.md
+            if [ -f "$worker_dir/CHITTY.md" ]; then
+              echo "  ✅ CHITTY.md present"
+              ((PASS++))
+              if head -1 "$worker_dir/CHITTY.md" | grep -q '^---'; then
+                echo "  ✅ CHITTY.md has frontmatter"
+                ((PASS++))
+              else
+                echo "  ⚠️  CHITTY.md missing YAML frontmatter"
+                ((WARN++))
+              fi
+            else
+              echo "  ⚠️  CHITTY.md missing (recommended)"
+              ((WARN++))
+            fi
+
+            # 3. wrangler.toml checks
+            WRANGLER="$worker_dir/wrangler.toml"
+            if [ -f "$WRANGLER" ]; then
+              echo "  ✅ wrangler.toml present"
+              ((PASS++))
+
+              # Check compatibility_date freshness (must be within ~6 months)
+              COMPAT_DATE=$(grep -oP 'compatibility_date\s*=\s*"\K[^"]+' "$WRANGLER" || true)
+              if [ -n "$COMPAT_DATE" ]; then
+                COMPAT_EPOCH=$(date -d "$COMPAT_DATE" +%s 2>/dev/null || date -j -f "%Y-%m-%d" "$COMPAT_DATE" +%s 2>/dev/null || echo 0)
+                SIX_MONTHS_AGO=$(date -d "-6 months" +%s 2>/dev/null || date -v-6m +%s 2>/dev/null || echo 0)
+                if [ "$COMPAT_EPOCH" -gt "$SIX_MONTHS_AGO" ] 2>/dev/null; then
+                  echo "  ✅ compatibility_date is recent ($COMPAT_DATE)"
+                  ((PASS++))
+                else
+                  echo "  ⚠️  compatibility_date may be stale ($COMPAT_DATE)"
+                  ((WARN++))
+                fi
+              fi
+
+              # Check tail_consumers
+              if grep -q 'tail_consumers' "$WRANGLER"; then
+                echo "  ✅ tail_consumers configured"
+                ((PASS++))
+              else
+                echo "  ⚠️  No tail_consumers (ChittyTrack observability)"
+                ((WARN++))
+              fi
+
+              # Check for hardcoded secrets in [vars]
+              if grep -A 50 '^\[vars\]' "$WRANGLER" | grep -iP '(secret|token|password|api_key)\s*=' | grep -vP '^\s*#' | head -1 > /dev/null 2>&1; then
+                echo "  ❌ Possible hardcoded secret in [vars]"
+                ((FAIL++))
+                EXIT_CODE=1
+              else
+                echo "  ✅ No hardcoded secrets in [vars]"
+                ((PASS++))
+              fi
+            fi
+
+            # 4. Health endpoint in source
+            SRC_DIR="$worker_dir/src"
+            if [ -d "$SRC_DIR" ]; then
+              if grep -rq "'/health'" "$SRC_DIR" 2>/dev/null || grep -rq '"/health"' "$SRC_DIR" 2>/dev/null; then
+                echo "  ✅ /health endpoint found in source"
+                ((PASS++))
+              else
+                echo "  ❌ No /health endpoint in source"
+                ((FAIL++))
+                EXIT_CODE=1
+              fi
+            fi
+
+            # 5. package.json name match
+            PKG="$worker_dir/package.json"
+            if [ -f "$PKG" ]; then
+              PKG_NAME=$(grep -oP '"name"\s*:\s*"\K[^"]+' "$PKG" || true)
+              WRANGLER_NAME=$(grep -oP '^name\s*=\s*"\K[^"]+' "$WRANGLER" 2>/dev/null || true)
+              if [ -n "$PKG_NAME" ] && [ -n "$WRANGLER_NAME" ] && [ "$PKG_NAME" = "$WRANGLER_NAME" ]; then
+                echo "  ✅ package.json name matches wrangler ($PKG_NAME)"
+                ((PASS++))
+              elif [ -n "$PKG_NAME" ] && [ -n "$WRANGLER_NAME" ]; then
+                echo "  ⚠️  Name mismatch: package.json=$PKG_NAME wrangler=$WRANGLER_NAME"
+                ((WARN++))
+              fi
+            fi
+
+            echo ""
+            echo "  Results: ✅ $PASS pass | ⚠️  $WARN warn | ❌ $FAIL fail"
+            echo ""
+          done <<< "$WORKERS"
+
+          if [ "$EXIT_CODE" -ne 0 ]; then
+            echo "❌ Compliance check failed — see errors above"
+          else
+            echo "✅ All compliance checks passed"
+          fi
+          exit $EXIT_CODE
+
+      - name: Skip notice
+        if: steps.detect.outputs.skip == 'true'
+        run: |
+          echo "✅ No worker changes — compliance check not required"
