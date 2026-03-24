@@ -1,49 +1,57 @@
 # ChittyOS
 
-> Operating System & Infrastructure
+**Trust infrastructure and intelligent operating system for verification, identity, and evidence.**
 
-Building next-generation operating system and infrastructure components
+ChittyOS is a distributed platform of Cloudflare Workers powering identity resolution, evidence processing, trust scoring, and service orchestration across the Chitty ecosystem.
 
-## Focus Areas
+## Architecture
 
-- **Operating Systems**
-- **System Software**
-- **Infrastructure**
-- **Developer Tools**
+Services are organized by tier, where lower tiers have no upstream dependencies:
 
-## Our Repositories
+| Tier | Services | Purpose |
+|------|----------|---------|
+| **0** | ChittyID, ChittyTrust, ChittySchema | Trust anchors — identity, trust resolution, schema governance |
+| **1** | ChittyAuth, ChittyCert, ChittyRegister | Core identity — authentication, certification, service registration |
+| **2** | ChittyConnect, ChittyRouter, ChittyAPI | Platform — API gateway, MCP server, intelligent routing |
+| **3** | ChittyMonitor, ChittyTrack, ChittyBeacon | Operational — observability, logging, distributed tracking |
+| **4** | ChittyEvidence, ChittyIntel, ChittyScore | Domain — evidence processing, intelligence, scoring |
+| **5** | ChittyCases, ChittyDashboard, ChittyCommand | Application — case management, dashboards, automation |
 
-Explore our projects organized by purpose and technology:
+Every service exposes a health endpoint at `https://{service}.chitty.cc/health` and follows the compliance triad: `CHARTER.md` (contract) + `CHITTY.md` (architecture) + `CLAUDE.md` (dev guide).
 
-### 🔍 Discover Projects
+## Key Projects
 
-- **By Language**: Use repository topics to filter by programming language
-- **By Purpose**: Look for repositories tagged with specific use cases
-- **By Status**: Active development vs. archived projects
+| Project | What It Does |
+|---------|-------------|
+| [**ChittyConnect**](https://github.com/chittyos/chittyconnect) | AI-intelligent spine with ContextConsciousness and MemoryCloude — REST API, MCP server, GitHub App |
+| [**ChittyCore**](https://github.com/chittyos/chittycore) | Shared `@chittyos/core` package — ID, auth, verification, beacon, brand, canon, agents |
+| [**ChittyRouter**](https://github.com/chittyos/chittyrouter) | Intelligent gateway with prompt-lookup, circuit breaking, and AI-powered routing |
+| [**ChittyMCP**](https://github.com/chittyos/chittymcp) | Consolidated Model Context Protocol servers for Claude integration |
+| [**ChittyRegistry**](https://github.com/chittyos/chittyregistry) | Universal service registry with discovery, search, and AI-driven recommendations |
+| [**ChittyMarket**](https://github.com/chittyos/chittymarket) | Claude Code ecosystem marketplace — skills, agents, hooks, MCP servers |
 
-### 🚀 Getting Started
+## Stack
 
-1. **Browse**: Check out our pinned repositories for key projects
-2. **Contribute**: See individual repository CONTRIBUTING.md files
-3. **Connect**: Reach out via repository issues or discussions
+- **Runtime**: Cloudflare Workers (V8 isolates)
+- **Database**: Neon PostgreSQL + Cloudflare D1
+- **Storage**: Cloudflare R2 + KV
+- **Auth**: ChittyAuth with ChittyID entity ontology (P/L/T/E/A)
+- **Observability**: ChittyTrack tail workers + ChittyMonitor
+- **CI/CD**: GitHub Actions with compliance gates
 
-## Community
+## Ecosystem
 
-- **Issues**: Report bugs and request features in individual repositories
-- **Discussions**: Join conversations in repository discussion sections
-- **Contributing**: We welcome contributions! See our contribution guidelines
+ChittyOS is the platform layer of a broader ecosystem:
 
-## Standards
+- [**ChittyFoundation**](https://github.com/chittyfoundation) — Non-profit trust infrastructure (ChittyChain, ChittyDNA)
+- [**ChittyApps**](https://github.com/chittyapps) — End-user applications (ChittyFinance, DocuMint, ChittyProof)
+- [**ChittyCorp**](https://github.com/chittycorp) — Corporate services and brand assets (ChittyBrand, ChittyReception)
+- [**ChicagoApps**](https://github.com/chicagoapps) — Legal technology and financial forensics for Cook County
 
-All our repositories follow consistent standards:
+## Contributing
 
-- ✅ Clear documentation (README, CONTRIBUTING, LICENSE)
-- ✅ Proper tagging and descriptions  
-- ✅ Code quality practices
-- ✅ Community guidelines
+Each repository has its own `CLAUDE.md` with development commands and patterns. Start there.
 
 ---
 
-**Building quality software that makes a difference** ✨
-
-*This organization is part of the broader Chitty ecosystem of technology solutions.*
+[chitty.cc](https://chitty.cc) · [registry.chitty.cc](https://registry.chitty.cc)
