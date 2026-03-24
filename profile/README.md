@@ -44,8 +44,9 @@ Every service exposes a health endpoint at `https://{service}.chitty.cc/health` 
 ChittyOS is the platform layer of a broader ecosystem:
 
 - [**ChittyFoundation**](https://github.com/chittyfoundation) — Non-profit trust infrastructure (ChittyChain, ChittyDNA)
-- [**ChittyApps**](https://github.com/chittyapps) — End-user applications (ChittyFinance, ChittyBrand, DocuMint)
-- [**ChittyCorp**](https://github.com/chittycorp) — Corporate services and internal tools
+- [**ChittyApps**](https://github.com/chittyapps) — End-user applications (ChittyFinance, DocuMint, ChittyProof)
+- [**ChittyCorp**](https://github.com/chittycorp) — Corporate services and brand assets (ChittyBrand, ChittyReception)
+- [**ChicagoApps**](https://github.com/chicagoapps) — Legal technology and financial forensics for Cook County
 
 ## Contributing
 
